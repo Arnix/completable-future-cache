@@ -1,31 +1,17 @@
 /**
  * Copyright (c) 2015-2016 the original author or authors
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package io.jmnarloch.concurrent.cache;
-
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
@@ -36,6 +22,18 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
+import org.junit.Before;
+import org.junit.Test;
+
 /**
  * Tests the {@link EvictableCompletableFutureCache} class.
  *
@@ -43,263 +41,341 @@ import static org.junit.Assert.assertTrue;
  */
 public class EvictableCompletableFutureCacheTest {
 
-    private Executor executor;
+  private Executor executor;
 
-    private CompletableFutureCache<String, String> instance;
+  private CompletableFutureCache<String, String> instance;
 
-    @Before
-    public void setUp() throws Exception {
+  @Before
+  public void setUp() throws Exception {
 
-        executor = Executors.newFixedThreadPool(5);
-        instance = new EvictableCompletableFutureCache<>(executor, 10, TimeUnit.SECONDS);
-    }
+    executor = Executors.newFixedThreadPool(5);
+    instance = new EvictableCompletableFutureCache<>(executor, 10, TimeUnit.SECONDS);
+  }
 
-    @Test
-    public void shouldBeEmpty() {
+  @Test
+  public void shouldBeEmpty() {
 
-        // expect
-        assertTrue(instance.isEmpty());
-    }
+    // expect
+    assertTrue(instance.isEmpty());
+  }
 
-    @Test
-    public void shouldNotBeEmpty() {
+  @Test
+  public void shouldNotBeEmpty() {
 
-        // given
-        final String key = "task";
-        final Supplier<String> supplier = () -> "completed";
+    // given
+    final String key = "task";
+    final Supplier<String> supplier = () -> "completed";
 
-        // when
-        instance.supply(key, supplier);
+    // when
+    instance.supply(key, supplier);
 
-        // then
-        assertFalse(instance.isEmpty());
-    }
+    // then
+    assertFalse(instance.isEmpty());
+  }
 
-    @Test
-    public void shouldHaveZeroSizeForEmpty() {
+  @Test
+  public void shouldHaveZeroSizeForEmpty() {
 
-        // expect
-        assertEquals(0, instance.size());
-    }
+    // expect
+    assertEquals(0, instance.size());
+  }
 
-    @Test
-    public void shouldHaveNonZeroSizeForNonEmpty() {
+  @Test
+  public void shouldHaveNonZeroSizeForNonEmpty() {
 
-        // given
-        final String key = "task";
-        final Supplier<String> supplier = () -> "completed";
+    // given
+    final String key = "task";
+    final Supplier<String> supplier = () -> "completed";
 
-        // when
-        instance.supply(key, supplier);
+    // when
+    instance.supply(key, supplier);
 
-        // then
-        assertEquals(1, instance.size());
-    }
+    // then
+    assertEquals(1, instance.size());
+  }
 
-    @Test(expected = NullPointerException.class)
-    public void shouldSupplyRejectNullKey() {
+  @Test(expected = NullPointerException.class)
+  public void shouldSupplyRejectNullKey() {
 
-        // given
-        final Supplier<String> supplier = () -> "completed";
+    // given
+    final Supplier<String> supplier = () -> "completed";
 
-        // when
-        instance.supply(null, supplier);
-    }
+    // when
+    instance.supply(null, supplier);
+  }
 
-    @Test(expected = NullPointerException.class)
-    public void shouldSupplyRejectNullSupplier() {
+  @Test(expected = NullPointerException.class)
+  public void shouldSupplyRejectNullSupplier() {
 
-        // given
-        final String key = "task";
+    // given
+    final String key = "task";
 
-        // when
-        instance.supply(key, null);
-    }
+    // when
+    instance.supply(key, null);
+  }
 
-    @Test
-    public void shouldSupplyTaskAndAwaitCompletion() {
+  @Test
+  public void shouldSupplyTaskAndAwaitCompletion() {
 
-        // given
-        final String key = "task";
-        final Supplier<String> supplier = () -> "completed";
+    // given
+    final String key = "task";
+    final Supplier<String> supplier = () -> "completed";
 
-        // when
-        final CompletableFuture<String> future = instance.supply(key, supplier);
+    // when
+    final CompletableFuture<String> future = instance.supply(key, supplier);
 
-        // then
-        assertEquals(supplier.get(), future.join());
-    }
+    // then
+    assertEquals(supplier.get(), future.join());
+  }
 
-    @Test
-    public void shouldSupplyTaskAndRetrievedCachedValue() throws InterruptedException {
+  @Test
+  public void shouldSupplyTaskAndRetrievedCachedValue() throws InterruptedException {
 
-        // given
-        final String key = "task";
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-        final Supplier<String> supplier = () -> {
-            countDownLatch.countDown();
-            return "completed";
-        };
-        final CompletableFuture<String> future = instance.supply(key, supplier);
+    // given
+    final String key = "task";
+    final CountDownLatch countDownLatch = new CountDownLatch(1);
+    final Supplier<String> supplier = () -> {
+      countDownLatch.countDown();
+      return "completed";
+    };
+    final CompletableFuture<String> future = instance.supply(key, supplier);
+    countDownLatch.await();
+
+    // when
+    CompletableFuture<String> cached;
+    do {
+      cached = instance.supply(key, supplier);
+    } while (future == cached);
+
+    // then
+    assertNotSame(future, cached);
+    assertTrue(cached.isDone());
+    assertEquals(supplier.get(), cached.join());
+  }
+
+  @Test
+  public void shouldSupplyTaskAndMaintainSingleTask() throws InterruptedException {
+
+    // given
+    final int iter = 100;
+    final String key = "task";
+    final CountDownLatch countDownLatch = new CountDownLatch(iter);
+    final Supplier<String> supplier = () -> {
+      try {
         countDownLatch.await();
+        return "completed";
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    };
 
-        // when
-        CompletableFuture<String> cached;
-        do {
-            cached = instance.supply(key, supplier);
-        } while (future == cached);
+    // and
+    final CompletableFuture<String> future = instance.supply(key, supplier);
 
-        // then
-        assertNotSame(future, cached);
-        assertTrue(cached.isDone());
-        assertEquals(supplier.get(), cached.join());
+    // expect
+    for (int ind = 0; ind < iter; ind++) {
+      final CompletableFuture<String> cached = instance.supply(key, supplier);
+      assertSame(future, cached);
+      assertTrue(!cached.isDone());
+      countDownLatch.countDown();
+    }
+  }
+
+  @Test
+  public void shouldRemoveFutureOnError() {
+
+    // given
+    final String key = "task";
+    final Supplier<String> supplier = () -> {
+      throw new RuntimeException("unexpected");
+    };
+
+    // when
+    final CompletableFuture<String> future = instance.supply(key, supplier);
+
+    // then
+    try {
+      future.join();
+      fail();
+    } catch (CompletionException e) {
+      assertTrue(future.isCompletedExceptionally());
+      assertNull(instance.get(key));
+    }
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void shouldGetRejectNullKey() {
+
+    // when
+    instance.get(null);
+  }
+
+  @Test
+  public void shouldGetFuture() {
+
+    // given
+    final String key = "task";
+    final Supplier<String> supplier = () -> "completed";
+    instance.supply(key, supplier);
+
+    // when
+    final CompletableFuture<String> future = instance.get(key);
+
+    // then
+    assertNotNull(future);
+    assertEquals(supplier.get(), future.join());
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void shouldGetOptionalRejectNullKey() {
+
+    // when
+    instance.getOptional(null);
+  }
+
+  @Test
+  public void shouldGetOptionalFuture() {
+
+    // given
+    final String key = "task";
+    final Supplier<String> supplier = () -> "completed";
+    instance.supply(key, supplier);
+
+    // when
+    final Optional<CompletableFuture<String>> future = instance.getOptional(key);
+
+    // then
+    assertNotNull(future);
+    assertNotNull(future.get());
+    assertEquals(supplier.get(), future.get().join());
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void shouldInvalidateRejectNullKey() {
+
+    // when
+    instance.invalidate(null);
+  }
+
+  @Test
+  public void shouldInvalidateTask() {
+
+    // given
+    final String key = "task";
+    final CountDownLatch countDownLatch = new CountDownLatch(1);
+    final Supplier<String> supplier = () -> {
+      try {
+        countDownLatch.await();
+        return "completed";
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    };
+    final CompletableFuture<String> future = instance.supply(key, supplier);
+
+    // when
+    instance.invalidate(key);
+
+    // then
+    countDownLatch.countDown();
+    assertTrue(future.isCancelled());
+  }
+
+  @Test
+  public void shouldInvalidateAllTasks() {
+
+    // given
+    final int iter = 5;
+    final String key = "task";
+    final Supplier<String> supplier = () -> "completed";
+
+    // and
+    for (int ind = 0; ind < iter; ind++) {
+      instance.supply(String.format("%s_%d", key, iter), supplier);
     }
 
-    @Test
-    public void shouldSupplyTaskAndMaintainSingleTask() throws InterruptedException {
+    // when
+    instance.invalidateAll();
 
-        // given
-        final int iter = 100;
-        final String key = "task";
-        final CountDownLatch countDownLatch = new CountDownLatch(iter);
-        final Supplier<String> supplier = () -> {
-            try {
-                countDownLatch.await();
-                return "completed";
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+    // then
+    assertEquals(0, instance.size());
+  }
+
+  static class Always implements CompletableFutureCache<String, String> {
+
+    private CompletableFutureCache<String, String> delegate;
+
+    public Always(CompletableFutureCache<String, String> delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public boolean isEmpty() {
+      return delegate.isEmpty();
+    }
+
+    @Override
+    public long size() {
+      return delegate.size();
+    }
+
+    @Override
+    public CompletableFuture<String> supply(String key, Supplier<String> supplier) {
+      return delegate.supply(key, supplier);
+    }
+
+    @Override
+    public CompletableFuture<String> get(String key) {
+      supply(key, () -> key);
+      return delegate.get(key);
+    }
+
+    @Override
+    public Optional<CompletableFuture<String>> getOptional(String key) {
+      return delegate.getOptional(key);
+    }
+
+    @Override
+    public void invalidate(String key) {
+      delegate.invalidate(key);
+    }
+
+    @Override
+    public void invalidateAll() {
+      delegate.invalidateAll();
+    }
+  }
+
+  @Test
+  public void testFoo() {
+    AtomicInteger ai = new AtomicInteger(0);
+    final Supplier<String> supplier = () -> {
+      ai.incrementAndGet();
+      return "arild";
+    };
+
+    instance.supply("arild", supplier);
+    instance.supply("arild", () -> "nilsen");
+
+    instance.get("arild")
+        .thenCombine(instance.get("arild"), (s, s2) -> s + s2)
+        .thenAccept(
+            ss -> {
+              System.out.println(ss + " call count " + ai.get());
+
             }
-        };
+        );
+  }
 
-        // and
-        final CompletableFuture<String> future = instance.supply(key, supplier);
+  @Test
+  public void testAlways() throws InterruptedException {
+      Always always = new Always(instance);
 
-        // expect
-        for (int ind = 0; ind < iter; ind++) {
-            final CompletableFuture<String> cached = instance.supply(key, supplier);
-            assertSame(future, cached);
-            assertTrue(!cached.isDone());
-            countDownLatch.countDown();
-        }
-    }
+      always.get("arild")
+          .thenCombine(always.get("nilsen"), (f,l) -> f + l)
+          .thenCombine(always.get("ego"), (fn, f) -> fn + f )
+          .thenAccept(System.out::println);
 
-    @Test
-    public void shouldRemoveFutureOnError() {
-
-        // given
-        final String key = "task";
-        final Supplier<String> supplier = () -> {
-            throw new RuntimeException("unexpected");
-        };
-
-        // when
-        final CompletableFuture<String> future = instance.supply(key, supplier);
-
-        // then
-        try {
-            future.join();
-            fail();
-        } catch (CompletionException e) {
-            assertTrue(future.isCompletedExceptionally());
-            assertNull(instance.get(key));
-        }
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void shouldGetRejectNullKey() {
-
-        // when
-        instance.get(null);
-    }
-
-    @Test
-    public void shouldGetFuture() {
-
-        // given
-        final String key = "task";
-        final Supplier<String> supplier = () -> "completed";
-        instance.supply(key, supplier);
-
-        // when
-        final CompletableFuture<String> future = instance.get(key);
-
-        // then
-        assertNotNull(future);
-        assertEquals(supplier.get(), future.join());
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void shouldGetOptionalRejectNullKey() {
-
-        // when
-        instance.getOptional(null);
-    }
-
-    @Test
-    public void shouldGetOptionalFuture() {
-
-        // given
-        final String key = "task";
-        final Supplier<String> supplier = () -> "completed";
-        instance.supply(key, supplier);
-
-        // when
-        final Optional<CompletableFuture<String>> future = instance.getOptional(key);
-
-        // then
-        assertNotNull(future);
-        assertNotNull(future.get());
-        assertEquals(supplier.get(), future.get().join());
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void shouldInvalidateRejectNullKey() {
-
-        // when
-        instance.invalidate(null);
-    }
-
-    @Test
-    public void shouldInvalidateTask() {
-
-        // given
-        final String key = "task";
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-        final Supplier<String> supplier = () -> {
-            try {
-                countDownLatch.await();
-                return "completed";
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        };
-        final CompletableFuture<String> future = instance.supply(key, supplier);
-
-        // when
-        instance.invalidate(key);
-
-        // then
-        countDownLatch.countDown();
-        assertTrue(future.isCancelled());
-    }
-
-    @Test
-    public void shouldInvalidateAllTasks() {
-
-        // given
-        final int iter = 5;
-        final String key = "task";
-        final Supplier<String> supplier = () -> "completed";
-
-        // and
-        for(int ind = 0; ind < iter; ind++) {
-            instance.supply(String.format("%s_%d", key, iter), supplier);
-        }
-
-        // when
-        instance.invalidateAll();
-
-        // then
-        assertEquals(0, instance.size());
-    }
+      TimeUnit.SECONDS.sleep(1);
+  }
 }

@@ -6,7 +6,7 @@ buildscript {
 
 plugins {
     id "com.github.hierynomus.license" version "0.11.0"
-    id 'net.researchgate.release' version '2.1.2'
+    //id 'net.researchgate.release' version '2.1.2'
     id 'com.github.kt3k.coveralls' version '2.4.0'
 }
 
@@ -18,8 +18,8 @@ apply from: 'libraries.gradle'
 apply from: 'gradle/license.gradle'
 apply from: 'gradle/release.gradle'
 
-apply plugin: 'findbugs'
-apply plugin: 'pmd'
+//apply plugin: 'findbugs'
+//apply plugin: 'pmd'
 
 apply plugin: 'com.github.kt3k.coveralls'
 
@@ -32,9 +32,9 @@ ext {
     isReleaseVersion = !version.endsWith("SNAPSHOT")
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.10'
-}
+//task wrapper(type: Wrapper) {
+//    gradleVersion = '5.1.1'
+//}
 
 jar {
     manifest {
@@ -59,9 +59,9 @@ dependencies {
     testCompile(libraries.mockito)
 }
 
-findbugs {
-    ignoreFailures = true
-}
+//findbugs {
+ //   ignoreFailures = true
+//}
 
 jacocoTestReport {
     reports {
